@@ -27,6 +27,14 @@ class SpendingService:
     @staticmethod
     def list_all(session):
         return Spending.select_all(session)
+
+    @staticmethod
+    def edit(session, spending_id, **fields):
+        return Spending.update(session, spending_id, **fields)
+
+    @staticmethod
+    def delete(session, spending_id):
+        return Spending.delete(session, spending_id)
     
     @staticmethod
     def process_spending(cmd_str):

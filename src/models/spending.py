@@ -65,9 +65,53 @@ class Spending(Base):
     @classmethod
     def select_all(cls, session: Session):
         return session.query(cls).all()
+
+    @classmethod
+    def delete(cls, session: Session, spending_id: int):
+        obj = session.get(cls, spending_id)
+        if obj is None:
+            raise ValueError(f"Gasto com id {spending_id} não encontrado.")
+        session.delete(obj)
+        session.commit()
+        return obj
+
+    @classmethod
+    def update(cls, session: Session, spending_id: int, **fields):
+        obj = session.get(cls, spending_id)
+        if obj is None:
+            raise ValueError(f"Gasto com id {spending_id} não encontrado.")
+
+        if "type_str" in fields:
+            type_upper = fields["type_str"].strip().upper()
+            if type_upper in SpendingType.__members__:
+                obj.type = SpendingType[type_upper]
+            else:
+                raise ValueError("Tipo inválido! Use 'debit', 'credit' ou 'pix'.")
+            del fields["type_str"]
+
+        if "installment" in fields:
+            inst = int(fields["installment"])
+            if inst < 1:
+                raise ValueError("Número de parcelas deve ser pelo menos 1.")
+            resulting_type = obj.type
+            if "type_str" in fields:
+                tp_upper = fields["type_str"].strip().upper()
+                if tp_upper in SpendingType.__members__:
+                    resulting_type = SpendingType[tp_upper]
+            if resulting_type != SpendingType.CREDIT:
+                raise ValueError("Parcelas só são permitidas para gastos do tipo credit.")
+            obj.installment = inst
+            del fields["installment"]
+
+        for key, val in fields.items():
+            if hasattr(obj, key):
+                setattr(obj, key, val)
+        session.commit()
+        session.refresh(obj)
+        return obj
     
     @classmethod
-    def summary_by_description_month(cls, session):
+    def summary_by_description_month(cls, session: Session):
         today = date.today()
         return (
             session.query(
