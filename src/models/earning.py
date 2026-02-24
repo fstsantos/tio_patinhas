@@ -26,10 +26,6 @@ class Earning(Base):
 
     @classmethod
     def insert(cls, session: Session, family_member_id: int, description: str, value: float, dat_received):
-        """
-        Insere um registro convertendo type_str para SpendingType.
-        """
-    
         new_earning = cls(
             family_member_id=family_member_id,
             description=description,

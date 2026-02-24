@@ -14,7 +14,7 @@ from db import SessionLocal
 from models import FamilyMember
 
 from handlers.earning_handler import handle_ganho
-from handlers.spending_handler import handle_gasto
+from handlers.spending_handler import handle_gasto, handle_lista_gastos
 from handlers.summary_handler import handle_summary
 
 load_dotenv()
@@ -40,10 +40,11 @@ async def handle_help(msg):
            
 Comandos disponíveis:
 - help - ajuda
-- gasto [debit|credit|pix] [valor] [descrição]
+- gasto [debit|credit|pix] [valor] [parcelas (só para crédito)] [descrição]
 - ganho [valor] [descrição]
 - resumo ganhos
-- resumo gastos""")
+- resumo gastos
+- lista gastos""")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
@@ -72,7 +73,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             case "gasto":
                 await handle_gasto(msg, cmd, session, family_member_id)
             case "resumo":
-                    await handle_summary(msg, action, session)
+                await handle_summary(msg, action, session)
+            case "lista":
+                if len(action) > 1 and action[1] == "gastos":
+                    await handle_lista_gastos(msg, session)
+                else:
+                    await msg.reply_text("Use: lista gastos")
             case _:
                 await msg.reply_text("Comando não disponível, utilize help para ajuda")
     except ValueError as e:

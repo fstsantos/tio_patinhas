@@ -22,6 +22,7 @@ class Spending(Base):
     value = Column(DECIMAL(10, 2), nullable=False)
     dat_spent = Column(Date, nullable=False)
     type = Column(Enum(SpendingType), nullable=False)
+    installment = Column(Integer, nullable=False, default=1)
 
     family_member = relationship(
         "FamilyMember",
@@ -29,14 +30,13 @@ class Spending(Base):
     )
 
     def __repr__(self):
-        return f"<Spending id={self.spending_id} description={self.description}, value={self.value} type={self.type}>"
+        return (
+            f"<Spending id={self.spending_id} description={self.description}, "
+            f"value={self.value} dat_spent={self.dat_spent} type={self.type} installments={self.installment}>"
+        )
 
     @classmethod
-    def insert(cls, session: Session, family_member_id: int, description: str, value: float, dat_spent, type_str: str):
-        """
-        Insere um registro convertendo type_str para SpendingType.
-        type_str deve ser: 'debit', 'credit' ou 'pix' (case-insensitive)
-        """
+    def insert(cls, session: Session, family_member_id: int, description: str, value: float, dat_spent, type_str: str, installment: int = 1):
         type_upper = type_str.strip().upper()
 
         if type_upper in SpendingType.__members__:
@@ -44,12 +44,18 @@ class Spending(Base):
         else:
             raise ValueError("Tipo inválido! Use 'debit', 'credit' ou 'pix'.")
 
+        if type_enum != SpendingType.CREDIT:
+            installment = 1
+        elif installment < 1:
+            raise ValueError("Número de parcelas deve ser pelo menos 1.")
+
         new_spending = cls(
             family_member_id=family_member_id,
             description=description,
             value=value,
             dat_spent=dat_spent,
-            type=type_enum
+            type=type_enum,
+            installment=installment,
         )
         session.add(new_spending)
         session.commit()
