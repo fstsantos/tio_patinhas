@@ -13,7 +13,12 @@ from telegram.ext import (
 from db import SessionLocal
 from models import FamilyMember
 
-from handlers.earning_handler import handle_ganho
+from handlers.earning_handler import (
+    handle_ganho,
+    handle_lista_ganhos,
+    handle_editar_ganho,
+    handle_apagar_ganho,
+)
 from handlers.spending_handler import (
     handle_gasto,
     handle_lista_gastos,
@@ -41,17 +46,28 @@ def get_help():
 
 async def handle_help(msg):
     await msg.reply_text(
-"""Tio Patinhas Bot v0.1 💰
+"""Tio Patinhas Bot v0\.1 💰
            
-Comandos disponíveis:
-- help - ajuda
-- gasto [debit|credit|pix] [valor] [parcelas (só para crédito)] [descrição]
-- editar gasto <id> <campo> <valor>  (campos: descricao, valor, tipo, parcelas, data)
-- apagar gasto <id>
-- lista gastos
-- ganho [valor] [descrição]
-- resumo ganhos
-- resumo gastos""")
+*Comandos disponíveis:*
+
+*Gastos*
+    \- gasto [debit\|credit\|pix] [valor] [parcelas \(só para crédito\)] [descrição]
+    \- editar gasto \<id\> \<campo\> \<valor\>  \(campos: descricao, valor, tipo, parcelas, data\)
+    \- apagar gasto \<id\>
+    \- lista gastos
+
+*Ganhos*
+    \- ganho [valor] [descrição]
+    \- lista ganhos
+    \- editar ganho \<id\> \<campo\> \<valor\>  \(campos: descricao, valor, data\)
+    \- apagar ganho \<id\>
+
+*Resumo*
+\- resumo ganhos
+\- resumo gastos
+
+\- help \- ajuda""",
+    parse_mode="MarkdownV2")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
@@ -82,14 +98,35 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             case "resumo":
                 await handle_summary(msg, action, session)
             case "lista":
-                if len(action) > 1 and action[1] == "gastos":
-                    await handle_lista_gastos(msg, session)
+                if len(action) > 1:
+                    if action[1] == "gastos":
+                        await handle_lista_gastos(msg, session)
+                    elif action[1] == "ganhos":
+                        await handle_lista_ganhos(msg, session)
+                    else:
+                        await msg.reply_text("Use: lista gastos ou lista ganhos")
                 else:
-                    await msg.reply_text("Use: lista gastos")
+                    await msg.reply_text("Use: lista gastos ou lista ganhos")
             case "editar":
-                await handle_editar_gasto(msg, cmd, session, family_member_id)
+                if len(action) > 1:
+                    if action[1].startswith("gasto"):
+                        await handle_editar_gasto(msg, cmd, session, family_member_id)
+                    elif action[1].startswith("ganho"):
+                        await handle_editar_ganho(msg, cmd, session, family_member_id)
+                    else:
+                        await msg.reply_text("Use: editar gasto <id> <campo> <valor> ou editar ganho <id> <campo> <valor>")
+                else:
+                    await msg.reply_text("Use: editar gasto <id> <campo> <valor> ou editar ganho <id> <campo> <valor>")
             case "apagar":
-                await handle_apagar_gasto(msg, cmd, session, family_member_id)
+                if len(action) > 1:
+                    if action[1].startswith("gasto"):
+                        await handle_apagar_gasto(msg, cmd, session, family_member_id)
+                    elif action[1].startswith("ganho"):
+                        await handle_apagar_ganho(msg, cmd, session, family_member_id)
+                    else:
+                        await msg.reply_text("Use: apagar gasto <id> ou apagar ganho <id>")
+                else:
+                    await msg.reply_text("Use: apagar gasto <id> ou apagar ganho <id>")
             case _:
                 await msg.reply_text("Comando não disponível, utilize help para ajuda")
     except ValueError as e:

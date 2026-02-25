@@ -21,7 +21,17 @@ class EarningService:
     @staticmethod
     def total_month(session):
         return Earning.total_month(session)
-    
+    @staticmethod
+    def list_all(session):
+        return Earning.select_all(session)
+
+    @staticmethod
+    def edit(session, earning_id, **fields):
+        return Earning.update(session, earning_id, **fields)
+
+    @staticmethod
+    def delete(session, earning_id):
+        return Earning.delete(session, earning_id)    
     @staticmethod
     def process_earning(cmd_str):
         pattern = r"^ganho\s+([0-9]+(?:[.,][0-9]{1,2})?)\s+(.+)$"

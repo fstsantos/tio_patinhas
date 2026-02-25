@@ -60,3 +60,29 @@ class Earning(Base):
             )
             .scalar()
         )
+
+    @classmethod
+    def select_all(cls, session: Session):
+        return session.query(cls).all()
+
+    @classmethod
+    def delete(cls, session: Session, earning_id: int):
+        obj = session.get(cls, earning_id)
+        if obj is None:
+            raise ValueError(f"Ganho com id {earning_id} não encontrado.")
+        session.delete(obj)
+        session.commit()
+        return obj
+
+    @classmethod
+    def update(cls, session: Session, earning_id: int, **fields):
+        obj = session.get(cls, earning_id)
+        if obj is None:
+            raise ValueError(f"Ganho com id {earning_id} não encontrado.")
+
+        for key, val in fields.items():
+            if hasattr(obj, key):
+                setattr(obj, key, val)
+        session.commit()
+        session.refresh(obj)
+        return obj
