@@ -46,12 +46,12 @@ async def handle_help(msg):
 Comandos disponíveis:
 - help - ajuda
 - gasto [debit|credit|pix] [valor] [parcelas (só para crédito)] [descrição]
-- ganho [valor] [descrição]
 - editar gasto <id> <campo> <valor>  (campos: descricao, valor, tipo, parcelas, data)
 - apagar gasto <id>
+- lista gastos
+- ganho [valor] [descrição]
 - resumo ganhos
-- resumo gastos
-- lista gastos""")
+- resumo gastos""")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
