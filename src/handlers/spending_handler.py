@@ -13,14 +13,21 @@ async def handle_gasto(msg, cmd, session, family_member_id):
     )
     await msg.reply_text("💸 Gasto registrado com sucesso!")
 
-async def handle_lista_gastos(msg, session):
-    spendings = SpendingService.list_all(session)
+async def handle_lista_gastos(msg, session, search_term=None):
+    if search_term:
+        spendings = SpendingService.list_by_description(session, search_term)
+    else:
+        spendings = SpendingService.list_all(session)
 
     if not spendings:
-        await msg.reply_text("📭 Nenhum gasto registrado.")
+        if search_term:
+            await msg.reply_text(f"📭 Nenhum gasto encontrado com '{search_term}'.")
+        else:
+            await msg.reply_text("📭 Nenhum gasto registrado.")
         return
 
     lines = ["💸 *Lista de Gastos*\n"]
+    total = 0
 
     for s in spendings:
         lines.append(
@@ -31,7 +38,9 @@ async def handle_lista_gastos(msg, session):
             + "\n"
             "──────────────"
         )
+        total += s.value
 
+    lines.append(f"\n💰 *Total:* R$ {total:.2f}")
     await msg.reply_text("\n".join(lines), parse_mode="Markdown")
 
 

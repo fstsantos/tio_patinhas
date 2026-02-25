@@ -16,6 +16,7 @@ async def handle_lista_ganhos(msg, session):
         return
 
     lines = ["💰 *Lista de Ganhos*\n"]
+    total = 0
 
     for e in earnings:
         lines.append(
@@ -25,7 +26,9 @@ async def handle_lista_ganhos(msg, session):
             + "\n"
             "──────────────"
         )
+        total += e.value
 
+    lines.append(f"\n💰 *Total:* R$ {total:.2f}")
     await msg.reply_text("\n".join(lines), parse_mode="Markdown")
 
 

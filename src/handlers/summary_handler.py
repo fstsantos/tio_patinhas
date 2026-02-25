@@ -1,5 +1,7 @@
 from services.earning_service import EarningService
 from services.spending_service import SpendingService
+from datetime import date
+from calendar import monthrange
 
 async def handle_summary(msg, action, session):
     if len(action) < 2:
@@ -56,5 +58,13 @@ def format_spending_summary(spendings, total_earnings, total_spendings):
         if saldo >= 0
         else f"🚨 *Déficit:* R$ {saldo:.2f}"
     )
+
+    today = date.today()
+    last_day = monthrange(today.year, today.month)[1]
+    days_remaining = (last_day - today.day) + 1
+    
+    if days_remaining > 0 and saldo > 0:
+        average_spending = saldo / days_remaining
+        lines.append(f"\n💡 *Gasto médio sugerido:* R$ {average_spending:.2f}/dia ({days_remaining} dias restantes no mês)")
 
     return "\n".join(lines)

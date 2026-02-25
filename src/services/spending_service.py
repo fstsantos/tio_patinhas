@@ -29,6 +29,10 @@ class SpendingService:
         return Spending.select_all(session)
 
     @staticmethod
+    def list_by_description(session, search_term):
+        return Spending.select_by_description(session, search_term)
+
+    @staticmethod
     def edit(session, spending_id, **fields):
         return Spending.update(session, spending_id, **fields)
 

@@ -67,6 +67,12 @@ class Spending(Base):
         return session.query(cls).all()
 
     @classmethod
+    def select_by_description(cls, session: Session, search_term: str):
+        return session.query(cls).filter(
+            cls.description.ilike(f"%{search_term}%")
+        ).all()
+
+    @classmethod
     def delete(cls, session: Session, spending_id: int):
         obj = session.get(cls, spending_id)
         if obj is None:
