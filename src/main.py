@@ -54,7 +54,7 @@ async def handle_help(msg):
     \- gasto [debit\|credit\|pix] [valor] [parcelas \(só para crédito\)] [descrição]
     \- editar gasto \<id\> \<campo\> \<valor\>  \(campos: descricao, valor, tipo, parcelas, data\)
     \- apagar gasto \<id\>
-    \- lista gastos [busca (opcional)]
+    \- lista gastos [busca \(opcional\)]
 
 *Ganhos*
     \- ganho [valor] [descrição]
