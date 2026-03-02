@@ -54,7 +54,7 @@ async def handle_help(msg):
     \- gasto [debit\|credit\|pix] [valor] [parcelas \(só para crédito\)] [descrição]
     \- editar gasto \<id\> \<campo\> \<valor\>  \(campos: descricao, valor, tipo, parcelas, data\)
     \- apagar gasto \<id\>
-    \- lista gastos [nome do membro | busca \(opcional\)]
+    \- lista gastos [nome dda pessoa | busca \(opcional\)]
 
 *Ganhos*
     \- ganho [valor] [descrição]
@@ -84,6 +84,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         name=update.effective_user.first_name,
     )
 
+    if family_member_id is None:
+        await msg.reply_text(
+            f"❌ Usuário '{update.effective_user.first_name}' não registrado na família. "
+            "Por favor, peça ao administrador para registrá-lo no banco de dados."
+        )
+        return
+
     action = msg.text.lower().split(maxsplit=1)
     cmd = msg.text.lower()
     parts = msg.text.lower().split()
@@ -105,7 +112,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         member_id = None
                         if len(parts) > 2:
                             search_term = " ".join(parts[2:])
-                            # Check if the search term is a family member name
                             member_id = FamilyMember.get_id_by_name(session, search_term)
                         await handle_lista_gastos(msg, session, search_term=search_term, family_member_id=member_id)
                     elif action[1].startswith("ganhos"):
