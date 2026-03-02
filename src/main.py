@@ -54,7 +54,7 @@ async def handle_help(msg):
     \- gasto [debit\|credit\|pix] [valor] [parcelas \(só para crédito\)] [descrição]
     \- editar gasto \<id\> \<campo\> \<valor\>  \(campos: descricao, valor, tipo, parcelas, data\)
     \- apagar gasto \<id\>
-    \- lista gastos [busca \(opcional\)]
+    \- lista gastos [nome do membro | busca \(opcional\)]
 
 *Ganhos*
     \- ganho [valor] [descrição]
@@ -102,9 +102,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if len(action) > 1:
                     if action[1].startswith("gastos"):
                         search_term = None
+                        member_id = None
                         if len(parts) > 2:
                             search_term = " ".join(parts[2:])
-                        await handle_lista_gastos(msg, session, search_term)
+                            # Check if the search term is a family member name
+                            member_id = FamilyMember.get_id_by_name(session, search_term)
+                        await handle_lista_gastos(msg, session, search_term=search_term, family_member_id=member_id)
                     elif action[1].startswith("ganhos"):
                         await handle_lista_ganhos(msg, session)
                     else:

@@ -13,14 +13,18 @@ async def handle_gasto(msg, cmd, session, family_member_id):
     )
     await msg.reply_text("💸 Gasto registrado com sucesso!")
 
-async def handle_lista_gastos(msg, session, search_term=None):
-    if search_term:
+async def handle_lista_gastos(msg, session, search_term=None, family_member_id=None):
+    if family_member_id:
+        spendings = SpendingService.list_by_family_member_id(session, family_member_id)
+    elif search_term:
         spendings = SpendingService.list_by_description(session, search_term)
     else:
         spendings = SpendingService.list_all(session)
 
     if not spendings:
-        if search_term:
+        if family_member_id:
+            await msg.reply_text(f"📭 Nenhum gasto encontrado para este membro da família.")
+        elif search_term:
             await msg.reply_text(f"📭 Nenhum gasto encontrado com '{search_term}'.")
         else:
             await msg.reply_text("📭 Nenhum gasto registrado.")
@@ -31,7 +35,7 @@ async def handle_lista_gastos(msg, session, search_term=None):
 
     for s in spendings:
         lines.append(
-            f"🆔 {s.spending_id} | {s.dat_spent.strftime('%d/%m/%Y')}\n"
+            f"🆔 {s.spending_id} | {s.dat_spent.strftime('%d/%m/%Y')} | 👤 {s.family_member.name}\n"
             f"📄 {s.description}\n"
             f"💰 R$ {s.value:.2f} ({s.type.value})"
             + (f" • {s.installment}x" if s.installment > 1 else "")

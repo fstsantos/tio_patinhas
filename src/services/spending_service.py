@@ -33,6 +33,10 @@ class SpendingService:
         return Spending.select_by_description(session, search_term)
 
     @staticmethod
+    def list_by_family_member_id(session, family_member_id):
+        return Spending.select_by_family_member_id(session, family_member_id)
+
+    @staticmethod
     def edit(session, spending_id, **fields):
         return Spending.update(session, spending_id, **fields)
 

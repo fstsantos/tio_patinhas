@@ -53,3 +53,4 @@ venv.bak/
 .pytest_cache/
 .coverage
 htmlcov/
+finorg-ec2-cert.pem

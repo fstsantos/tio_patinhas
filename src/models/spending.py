@@ -73,6 +73,12 @@ class Spending(Base):
         ).all()
 
     @classmethod
+    def select_by_family_member_id(cls, session: Session, family_member_id: int):
+        return session.query(cls).filter(
+            cls.family_member_id == family_member_id
+        ).all()
+
+    @classmethod
     def delete(cls, session: Session, spending_id: int):
         obj = session.get(cls, spending_id)
         if obj is None:
