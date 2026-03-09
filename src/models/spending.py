@@ -23,6 +23,7 @@ class Spending(Base):
     dat_spent = Column(Date, nullable=False)
     type = Column(Enum(SpendingType), nullable=False)
     installment = Column(Integer, nullable=False, default=1)
+    original_spending_id = Column(Integer, nullable=True)
 
     family_member = relationship(
         "FamilyMember",
@@ -30,9 +31,15 @@ class Spending(Base):
     )
 
     def __repr__(self):
+        installment_info = ""
+        if self.original_spending_id is not None:
+            installment_info = f" [Parcela {self.original_spending_id}]"
+        elif self.installment > 1:
+            installment_info = f" ({self.installment}x)"
+        
         return (
             f"<Spending id={self.spending_id} description={self.description}, "
-            f"value={self.value} dat_spent={self.dat_spent} type={self.type} installments={self.installment}>"
+            f"value={self.value} dat_spent={self.dat_spent} type={self.type}{installment_info}>"
         )
 
     @classmethod
@@ -49,17 +56,58 @@ class Spending(Base):
         elif installment < 1:
             raise ValueError("Número de parcelas deve ser pelo menos 1.")
 
-        new_spending = cls(
-            family_member_id=family_member_id,
-            description=description,
-            value=value,
-            dat_spent=dat_spent,
-            type=type_enum,
-            installment=installment,
-        )
-        session.add(new_spending)
-        session.commit()
-        session.refresh(new_spending)
+        from dateutil.relativedelta import relativedelta
+        
+        # Create one record for each installment
+        if type_enum == SpendingType.CREDIT and installment > 1:
+            installment_value = value / installment
+            
+            # Create first installment with original date
+            new_spending = cls(
+                family_member_id=family_member_id,
+                description=description,
+                value=installment_value,
+                dat_spent=dat_spent,
+                type=type_enum,
+                installment=installment,
+                original_spending_id=None
+            )
+            session.add(new_spending)
+            session.commit()
+            session.refresh(new_spending)
+            
+            original_id = new_spending.spending_id
+            
+            # Create remaining installments for subsequent months
+            for i in range(1, installment):
+                inst_date = dat_spent + relativedelta(months=i)
+                inst = cls(
+                    family_member_id=family_member_id,
+                    description=description,
+                    value=installment_value,
+                    dat_spent=inst_date,
+                    type=type_enum,
+                    installment=installment,
+                    original_spending_id=original_id
+                )
+                session.add(inst)
+            
+            session.commit()
+        else:
+            # For non-credit or single installment, create normal spending
+            new_spending = cls(
+                family_member_id=family_member_id,
+                description=description,
+                value=value,
+                dat_spent=dat_spent,
+                type=type_enum,
+                installment=installment,
+                original_spending_id=None
+            )
+            session.add(new_spending)
+            session.commit()
+            session.refresh(new_spending)
+        
         return new_spending
     
     @classmethod
@@ -83,6 +131,19 @@ class Spending(Base):
         obj = session.get(cls, spending_id)
         if obj is None:
             raise ValueError(f"Gasto com id {spending_id} não encontrado.")
+        
+        # Only the original spending can be deleted
+        if obj.original_spending_id is not None:
+            raise ValueError("Não é permitido deletar parcelas geradas. Delete a transação original.")
+        
+        # If it's an original credit spending with installments, delete all related installments
+        if obj.type == SpendingType.CREDIT and obj.installment > 1:
+            related_installments = session.query(cls).filter(
+                cls.original_spending_id == spending_id
+            ).all()
+            for inst in related_installments:
+                session.delete(inst)
+        
         session.delete(obj)
         session.commit()
         return obj
@@ -92,6 +153,9 @@ class Spending(Base):
         obj = session.get(cls, spending_id)
         if obj is None:
             raise ValueError(f"Gasto com id {spending_id} não encontrado.")
+        
+        if obj.original_spending_id is not None:
+            raise ValueError("Não é permitido editar parcelas geradas. Edite a transação original.")
 
         if "type_str" in fields:
             type_upper = fields["type_str"].strip().upper()
@@ -115,6 +179,19 @@ class Spending(Base):
             obj.installment = inst
             del fields["installment"]
 
+        # If value is being updated and there are installments, update all records
+        if "value" in fields and obj.type == SpendingType.CREDIT and obj.installment > 1:
+            new_value = fields["value"]
+            inst_value = new_value / obj.installment
+            # Update the original spending with the new installment value
+            fields["value"] = inst_value
+            # Update all related installments
+            related_installments = session.query(cls).filter(
+                cls.original_spending_id == spending_id
+            ).all()
+            for inst in related_installments:
+                inst.value = inst_value
+        
         for key, val in fields.items():
             if hasattr(obj, key):
                 setattr(obj, key, val)

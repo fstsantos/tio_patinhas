@@ -11,7 +11,14 @@ async def handle_gasto(msg, cmd, session, family_member_id):
         type_str,
         installment=installment,
     )
-    await msg.reply_text("💸 Gasto registrado com sucesso!")
+    
+    if installment > 1:
+        await msg.reply_text(
+            f"💳 Gasto de R$ {value:.2f} registrado em {installment}x parcelas de R$ {value/installment:.2f}!\n"
+            f"As parcelas serão contabilizadas nos próximos meses."
+        )
+    else:
+        await msg.reply_text("💸 Gasto registrado com sucesso!")
 
 async def handle_lista_gastos(msg, session, search_term=None, family_member_id=None):
     if family_member_id:

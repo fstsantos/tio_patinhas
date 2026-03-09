@@ -42,7 +42,7 @@ def format_earning_summary(earnings):
 
 def format_spending_summary(spendings, total_earnings, total_spendings):
     if not spendings:
-        return "📭 Nenhum gasto registrado este mês."
+        return "Nenhum gasto registrado este mês."
 
     saldo = total_earnings - total_spendings
     lines = ["📉 *Gastos do mês (por descrição):*\n"]

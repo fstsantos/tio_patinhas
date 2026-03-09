@@ -17,13 +17,13 @@ from handlers.earning_handler import (
     handle_ganho,
     handle_lista_ganhos,
     handle_editar_ganho,
-    handle_apagar_ganho,
+    handle_apagar_ganho
 )
 from handlers.spending_handler import (
     handle_gasto,
     handle_lista_gastos,
     handle_editar_gasto,
-    handle_apagar_gasto,
+    handle_apagar_gasto
 )
 from handlers.summary_handler import handle_summary
 
@@ -51,13 +51,13 @@ async def handle_help(msg):
 *Comandos disponíveis:*
 
 *Gastos*
-    \- gasto [debit\|credit\|pix] [valor] [parcelas \(só para crédito\)] [descrição]
+    \- gasto \[debit\|credit\|pix\] \[valor\] \[parcelas \(só para crédito\)\] \[descrição\]
     \- editar gasto \<id\> \<campo\> \<valor\>  \(campos: descricao, valor, tipo, parcelas, data\)
     \- apagar gasto \<id\>
-    \- lista gastos [nome dda pessoa | busca \(opcional\)]
+    \- lista gastos \[nome dda pessoa \| busca \(opcional\)\]
 
 *Ganhos*
-    \- ganho [valor] [descrição]
+    \- ganho \[valor\] \[descrição\]
     \- lista ganhos
     \- editar ganho \<id\> \<campo\> \<valor\>  \(campos: descricao, valor, data\)
     \- apagar ganho \<id\>
