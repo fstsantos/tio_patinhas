@@ -39,17 +39,46 @@ async def handle_lista_gastos(msg, session, search_term=None, family_member_id=N
 
     lines = ["💸 *Lista de Gastos*\n"]
     total = 0
+    processed_ids = set()
 
     for s in spendings:
-        lines.append(
-            f"🆔 {s.spending_id} | {s.dat_spent.strftime('%d/%m/%Y')} | 👤 {s.family_member.name}\n"
-            f"📄 {s.description}\n"
-            f"💰 R$ {s.value:.2f} ({s.type.value})"
-            + (f" • {s.installment}x" if s.installment > 1 else "")
-            + "\n"
-            "──────────────"
-        )
-        total += s.value
+        # Skip if this is an installment that was already processed with its parent
+        if s.original_spending_id is not None:
+            continue
+        
+        # Skip if already processed
+        if s.spending_id in processed_ids:
+            continue
+        
+        processed_ids.add(s.spending_id)
+        
+        # If this is a credit with multiple installments, aggregate them
+        if s.installment > 1:
+            # Get all installments of this spending
+            from models import Spending
+            installments = session.query(Spending).filter(
+                (Spending.spending_id == s.spending_id) |
+                (Spending.original_spending_id == s.spending_id)
+            ).all()
+            
+            total_value = sum(inst.value for inst in installments)
+            total += total_value
+            
+            lines.append(
+                f"🆔 {s.spending_id} | {s.dat_spent.strftime('%d/%m/%Y')} | 👤 {s.family_member.name}\n"
+                f"📄 {s.description.rsplit(' (', 1)[0]}\n"  # Remove the (1/10) suffix for clean display
+                f"💰 R$ {total_value:.2f} ({s.type.value}) • {s.installment} parcelas\n"
+                "──────────────"
+            )
+        else:
+            # Single installment spending
+            lines.append(
+                f"🆔 {s.spending_id} | {s.dat_spent.strftime('%d/%m/%Y')} | 👤 {s.family_member.name}\n"
+                f"📄 {s.description}\n"
+                f"💰 R$ {s.value:.2f} ({s.type.value})\n"
+                "──────────────"
+            )
+            total += s.value
 
     lines.append(f"\n💰 *Total:* R$ {total:.2f}")
     await msg.reply_text("\n".join(lines), parse_mode="Markdown")
