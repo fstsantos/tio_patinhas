@@ -17,12 +17,12 @@ class SpendingService:
         )
 
     @staticmethod
-    def summary_by_description_month(session):
-        return Spending.summary_by_description_month(session)
+    def summary_by_description_month(session, start_date=None):
+        return Spending.summary_by_description_month(session, start_date)
 
     @staticmethod
-    def total_month(session):
-        return Spending.total_month(session)
+    def total_month(session, start_date=None):
+        return Spending.total_month(session, start_date)
 
     @staticmethod
     def list_all(session):

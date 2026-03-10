@@ -63,9 +63,10 @@ class Spending(Base):
             installment_value = value / installment
             
             # Create first installment with original date
+            desc_with_installment = f"{description} (1/{installment})"
             new_spending = cls(
                 family_member_id=family_member_id,
-                description=description,
+                description=desc_with_installment,
                 value=installment_value,
                 dat_spent=dat_spent,
                 type=type_enum,
@@ -81,9 +82,10 @@ class Spending(Base):
             # Create remaining installments for subsequent months
             for i in range(1, installment):
                 inst_date = dat_spent + relativedelta(months=i)
+                desc_with_installment = f"{description} ({i+1}/{installment})"
                 inst = cls(
                     family_member_id=family_member_id,
-                    description=description,
+                    description=desc_with_installment,
                     value=installment_value,
                     dat_spent=inst_date,
                     type=type_enum,
@@ -200,30 +202,50 @@ class Spending(Base):
         return obj
     
     @classmethod
-    def summary_by_description_month(cls, session: Session):
-        today = date.today()
-        return (
-            session.query(
-                cls.description,
-                func.sum(cls.value).label("total")
-            )
-            .filter(
+    def summary_by_description_month(cls, session: Session, start_date: date = None):
+        query = session.query(
+            cls.description,
+            func.sum(cls.value).label("total")
+        )
+        
+        if start_date is None:
+            # Default: only current month
+            today = date.today()
+            query = query.filter(
                 extract("month", cls.dat_spent) == today.month,
                 extract("year", cls.dat_spent) == today.year,
             )
-            .group_by(cls.description)
+        else:
+            # Custom date: all spendings from start_date up to today (inclusive)
+            today = date.today()
+            query = query.filter(
+                cls.dat_spent >= start_date,
+                cls.dat_spent <= today
+            )
+        
+        return (
+            query.group_by(cls.description)
             .order_by(func.sum(cls.value).desc())
             .all()
         )
 
     @classmethod
-    def total_month(cls, session):
-        today = date.today()
-        return (
-            session.query(func.coalesce(func.sum(cls.value), 0))
-            .filter(
+    def total_month(cls, session, start_date: date = None):
+        query = session.query(func.coalesce(func.sum(cls.value), 0))
+        
+        if start_date is None:
+            # Default: only current month
+            today = date.today()
+            query = query.filter(
                 extract("month", cls.dat_spent) == today.month,
                 extract("year", cls.dat_spent) == today.year,
             )
-            .scalar()
-        )
+        else:
+            # Custom date: all spendings from start_date up to today (inclusive)
+            today = date.today()
+            query = query.filter(
+                cls.dat_spent >= start_date,
+                cls.dat_spent <= today
+            )
+        
+        return query.scalar()

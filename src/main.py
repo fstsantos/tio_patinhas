@@ -64,7 +64,7 @@ async def handle_help(msg):
 
 *Resumo*
 \- resumo ganhos
-\- resumo gastos
+\- resumo gastos \[data início \(opcional\)\]
 
 \- help \- ajuda""",
     parse_mode="MarkdownV2")
